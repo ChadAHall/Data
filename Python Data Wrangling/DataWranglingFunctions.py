@@ -254,7 +254,7 @@ def shape_element(element): #this function will parse the xml data to JSON, whil
     else:
         return None
 
- # Function to produce the JSON file as output
+ # Function to produce the JSON file as output, provided by Udacity
 def process_map(filename, pretty = False): #function to produce the JSON file as output
     file_out = '{0}.json'.format(filename)
     data = []
