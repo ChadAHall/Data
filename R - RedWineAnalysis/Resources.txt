@@ -1,0 +1,17 @@
+https://www.data-to-viz.com/graph/density.html
+
+http://environmentalcomputing.net/plotting-with-ggplot-adding-titles-and-axis-names/
+
+https://www.calvin.edu/~scofield/courses/m143/materials/RcmdsFromClass.pdf
+
+https://www.r-bloggers.com/r-tutorial-series-summary-and-descriptive-statistics/
+
+https://stackoverflow.com/questions/4605206/drop-data-frame-columns-by-name
+
+https://www.statmethods.net/input/contents.html
+
+https://ggplot2.tidyverse.org/reference/ggtheme.html
+
+https://www.datanovia.com/en/blog/ggplot-themes-gallery/
+
+https://cran.r-project.org/web/packages/PerformanceAnalytics/PerformanceAnalytics.pdf
