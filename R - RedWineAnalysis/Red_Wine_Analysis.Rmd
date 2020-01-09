@@ -1,0 +1,477 @@
+---
+editor_options:
+  chunk_output_type: console
+output:
+  html_document: default
+  pdf_document: default
+---
+Red Wine Analysis by Chad Hall
+========================================================
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+library(ggplot2)
+library(gridExtra)
+library(dplyr)
+library(PerformanceAnalytics)
+library(ggthemes)
+```
+
+```{r echo=FALSE, Load_the_Data}
+rwine <- read.csv('winequalityreds.csv', header = TRUE)
+#With this command the data will be read in as a csv
+```
+
+> This data set contains information about the various elements of red wine, along with its quality.
+
+# Univariate Plots Section
+
+```{r echo=FALSE, message= FALSE, warning= FALSE, Univariate_Plots}
+rwine$new_quality <- rwine$quality
+rwine$new_quality <- factor(rwine$new_quality) #new factored column
+
+dim(rwine) #get dimensions of data
+
+str(rwine) #get structure of data
+
+summary(rwine) #get summary statistics of data
+
+```
+
+* The dataset contains 14 variables.
+* The first variable, x, is a unique identifier and sequenced count. I will not be including it in any of the analysis.
+* I have added a new variable, new_quality, which is factored copy of the quality varaible. This will assist in some analysis later.
+* There are almost 1600 observations.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+hist_make <- function(hist) {
+  ggplot(aes(hist), data = rwine)+
+  geom_histogram(fill = 'white', color = 'blue')
+}
+#this creates a function that will allow me to make a histogram while just calling the different variable
+```
+
+```{r echo=FALSE, message= FALSE, warning= FALSE}
+hist_make(rwine$fixed.acidity)+
+  xlab('Fixed Acidity (tartaric acid - g/dm^3)')
+```
+
+Most of the observations are around 6-11. There are a very low ammount of observations that are between 14-16. The lowest count of observations lies around 14. Later, I may want to see if this variable has any correlation to other acidity levels or pH level.
+
+```{r echo=FALSE, message= FALSE, warning= FALSE}
+hist_make(rwine$volatile.acidity)+
+  xlab('Volatile Acidity (acetic acid - g/dm^3)')
+```
+
+The volatile acidity is already looking slightly similar to the fixed acidity. It is looking like higher acidity wines are less avaialable.
+
+```{r echo=FALSE, message= FALSE, warning= FALSE}
+hist_make(rwine$citric.acid)+
+  xlab('Citric Acid (g/dm^3)')
+```
+
+Once again, higher acid levels fall off. It may be the case that wines with more acid are of lower quality. It will be interesting to see how quality and acidity go together.
+
+```{r echo=FALSE, message= FALSE, warning= FALSE}
+hist_make(rwine$residual.sugar)+
+  xlab('Residual Sugar (g/dm^3)')
+
+hist_make(rwine$residual.sugar)+
+  scale_x_log10()+ #scales the x axis by log10
+  xlab('log10')
+```
+
+Most of the observations fall on the lower scale of residual sugar. This is between 0.5 and 6. So far, it seems that less is more when it comes to wine. The distirbution seems to have a slight skew to it.
+
+```{r echo=FALSE, message= FALSE, warning= FALSE}
+hist_make(rwine$chlorides)+
+  xlab('Chlorides (sodium chloride - g/dm^3)')
+
+hist_make(rwine$volatile.acidity)+
+  scale_x_log10()+
+  xlab('log10')
+```
+
+Chlorides seems to be staying the course so far. Most observations on the low end of the value range. The original histogram was over overdistributed, so I used a log10 scale to better see the distribution. The values end up being more normally distributed when I use this scale.
+
+```{r echo=FALSE, message= FALSE, warning= FALSE}
+hist_make(rwine$free.sulfur.dioxide)+
+  xlab('Free Sulfur Dioxide (mg/dm^3)')
+
+hist_make(rwine$free.sulfur.dioxide)+
+  scale_x_log10()+
+  xlab('log10')
+```
+
+```{r echo=FALSE, message= FALSE, warning= FALSE}
+hist_make(rwine$total.sulfur.dioxide)+
+  xlab('Total Sulfur Dioxide (mg/dm^3)')
+
+hist_make(rwine$total.sulfur.dioxide)+
+  scale_x_log10()+
+  xlab('log10')
+```
+
+These two seem to go hand-in-hand. The reason being that free sulfur dioxide would be included in the total sulfur dioxide. As such, their distribution looks very similar. I wonder how free sulfur dioxide affects quality though up against total sulfur dioxide.
+
+```{r echo=FALSE, message= FALSE, warning= FALSE}
+hist_make(rwine$density)+
+  xlab('Density (g/cm^3)')
+
+summary(rwine$density)
+```
+
+The density of red wine seems to have a very normal distribution. The median is .997 and the mean is .997. Most observations are very close to this number.
+
+```{r echo=FALSE, message= FALSE, warning= FALSE}
+hist_make(rwine$pH)+
+  xlab('pH')
+```
+
+The pH of red wine also has a very normal distribution. I wonder if the pH will fall in line with the acidity levels in other variables.
+
+```{r echo=FALSE, message= FALSE, warning= FALSE}
+hist_make(rwine$sulphates)+
+  xlab('Sulphates (potassium sulfate - g/dm^3)')
+
+hist_make(rwine$sulphates)+
+  scale_x_log10()+
+  xlab('log10')
+```
+
+The original histogram suffers from overdistribution. When we transform using log10, we can see for the most part a normal distribution with a slight skew.
+
+```{r echo=FALSE, message= FALSE, warning= FALSE}
+hist_make(rwine$alcohol)+
+  xlab('Alcohol Content %')
+```
+
+Most observations are around 9 to 10. I wonder if alcohol content has any thing to do with the other variables, such as if they tend to put more acid into a higher alcohol content wine.
+
+```{r echo=FALSE, message= FALSE, warning= FALSE}
+ggplot(aes(x = quality), data = rwine)+
+  geom_histogram(fill = 'white', color = 'blue', binwidth = 1)+
+  scale_x_continuous(breaks = seq(3,8,1))+
+  xlab('Wine Quality')
+#I am not using the function here, since I needed to set the binwidth
+
+summary(rwine$quality)
+```
+
+Here we have the quality of the wine. It is integer based as we can see from the histogram. The mean quality is 5.64 and the median quality is 6.
+
+# Univariate Analysis
+
+### What is the structure of your dataset?
+There are 1599 different wine observations, and 13 variables. The variables are x, fixed acidity, volatile acidity, ciric acid, residual sugar, chlorides, free sulfur dioxide, total sulfur dioxide, density, pH, sulphates, alcohol, and quality. The x variable is an identifier sequence. Quality is an integer that is used to grade the alcohol. The rest of the variavlves are measurements. Some thoughts about the dataset:
+
+* The median quality is 6.
+* The mean quality is 5.64.
+* The maximum alcohol content is 14.9, while the mean is 10.42.
+
+### What is/are the main feature(s) of interest in your dataset?
+The main features I am interested is how well everything correlates with quality. Since quality is the 'judging' factor in this, what makes a good wine? What makes a poor quality wine?
+
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+I think that after I look at the correlation, I can see more places of interest to compare to quality and alcohol content of wines.
+
+### Did you create any new variables from existing variables in the dataset?
+Yes. I created a new variable new_quality. This is a factored version of the quality column. This will assist me in easier plotting later.
+
+### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+Several of the variables had long tails on them and strange distributions. I found it helpful to transform the data using log and I was able to get a better view of the distribution.
+
+# Bivariate Plots Section
+
+```{r  echo=FALSE, message= FALSE, warning= FALSE, Bivariate_Plots}
+chart.Correlation(subset(rwine, select = -(new_quality)), histogram = FALSE)
+#creates a correlation plot, and I have subtracted the new_quality variable from the plot. I have also chosen not to redisplay histograms
+```
+
+From the correlation chart, we can see quality has a strong positive correlation with alcohol, and a strong negative correlation with volatile acidity.
+
+#### Alcohol and Quality
+
+```{r  echo=FALSE, message= FALSE, warning= FALSE}
+bivar_set <- function(first, second) {
+  ggplot(aes(first, second), data = rwine)
+}
+#here I made a basic function to set the ggplot line of bivariate plots
+
+bivar_set(rwine$quality,rwine$alcohol)+
+  geom_jitter(alpha = 1/5, color = 'blue')+
+  geom_line(stat = 'summary', fun.y = mean, color = 'red')+
+  xlab('Wine Quality')+
+  ylab('Alcohol Content %')
+#by using geom_jitter, I can avoid overplotting caused by integer values
+
+
+ggplot(aes(group = quality, x = quality, y = alcohol), data = rwine)+
+  geom_boxplot(color = 'blue', fill = 'grey')+
+  xlab('Wine Quality')+
+  ylab('Alcohol Content %')
+#grouping the data into quality, I can see the alcohol content in a box and whisker plot and compare means
+```
+
+#### Correlation/Summary
+
+```{r echo=FALSE, message = FALSE, warning = FALSE}
+cor(rwine$quality, rwine$alcohol)
+by(rwine$alcohol, rwine$quality, summary)
+#with these two commands, I can display the correlation of the two variables, then get summary statistics of the alcohol grouped by quality
+```
+
+From looking at this correlation, we can see that the mean alcohol content of higher quality alcohols is higher. It is also capable of seeing that there are fewer high quality alcohols. Also, it can be seen that the average alcohol level is higher in the higher quality alcohols when looking at each quality rating's mean.
+
+#### Quality/Volatile Acidity
+
+```{r  echo = FALSE, message= FALSE, warning= FALSE}
+bivar_set(rwine$quality,rwine$volatile.acidity)+
+  geom_jitter(alpha = 1/5)+
+  xlab('Wine Quality')+
+  ylab('Volatile Acidity (acetic acid - g/dm^3)')
+
+ggplot(aes(group = quality, x= quality, y = volatile.acidity), data = rwine)+
+  geom_boxplot()+
+  xlab('Wine Quality')+
+  ylab('Volatile Acidity (acetic acid - g/dm^3)')
+```
+
+#### Correlation/Summary
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+cor(rwine$quality, rwine$volatile.acidity)
+by(rwine$volatile.acidity, rwine$quality, summary)
+```
+
+Looking at this correlation between quality and volatile acidity, it seems that usually high quality wines are of a lower acidity.
+
+#### Alcohol/Density
+
+```{r  echo = FALSE, message= FALSE, warning= FALSE}
+bivar_set(rwine$alcohol,rwine$density)+
+  geom_density2d(color = 'black')+
+  geom_jitter(alpha = 1/10, color = 'magenta')+
+  geom_smooth()+
+  xlab('Alcohol Content %')+
+  ylab('Density (g/cm^3)')+
+  theme_tufte()
+#this code additional to the function bivar_set allows me to also plot a 2d density, geom_jitter, and a smoothing line. Setting the theme also allows for better readability
+```
+
+#### Correlation
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+cor(rwine$alcohol, rwine$density)
+```
+
+Looking at the graph, there is a strong negative correlation in density and alcohol. As the alcohol content gets higher, generally the density is reduced. It would also seem that most alcohols are of around 9.5 alcohol content.
+
+#### Fixed Acidity/Density
+
+```{r  echo=FALSE, message= FALSE, warning= FALSE}
+bivar_set(rwine$fixed.acidity,rwine$density)+
+  geom_point(alpha = 1/10, color = 'magenta')+
+  geom_smooth()+
+  geom_density2d(color = 'black')+
+  xlab('Fixed Acidity (tartaric acid g/dm^3)')+
+  ylab('Density (g/cm^3)')+
+  theme_tufte()
+```
+
+#### Correlation
+
+```{r echo = FALSE, message = FALSE, warning = FALSE}
+cor(rwine$fixed.acidity, rwine$density)
+```
+
+The plot shows that as acidity rises, generally so does density. There tend to be a strong positive correlation here. I think that it will be interesting to see how this looks when it is matched with other variabls in the multivariate analysis.
+
+# Bivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+Using the correlation plot, I was able to select out which relationships to observe. I selected out relationships with strong correlation. I am especially interested in alcohol vs quality. Since wine has such varying alcohol content and price, I wonder how this alcohol affects the quality, and if higher quality alcohols have higher or lower quality than others.
+
+### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+I am also intereted in exploring the volatile acidity levels and the fixed acidity levels. I was able to see correlation between the quality of the alcohol. Also the density of the alcohol seems to have an interesting correlation to alcohol content, which may also lead to discoveries about the density for different wine qualities.
+
+### What was the strongest relationship you found?
+The strongest correlation in the correlation plot was fixed acidity to pH. I would rather not use this one later, as pH is an acidity scale itself. The strongest correlation that I am interested in in density and fixed acidity.
+
+# Multivariate Plots Section
+
+```{r echo=FALSE, message=FALSE, comment=FALSE, Multivariate_Plots}
+alc_dens <- function(thisset){
+  ggplot(aes(alcohol, fill = (new_quality) , colour = new_quality),
+       data = thisset)+
+  geom_density(alpha = 1/20)+
+  labs(fill = 'Wine Quality', colour = 'Wine Quality')+
+  xlab('Alcohol Content %')+
+  theme_hc()
+}
+#This code makes a function that plots a density chart. Later on I will be using different data sets that are subsets of a data set so this avoids repeating unnecessary code
+
+alc_dens(rwine)
+#This plots a density chart for alcohol content based on the quality
+
+```
+
+From this density plot, we can see how all of the different quality wines measure when when it coems to alcohol content. Quality 3's, 4's, and 5's tend to stay below 12, while the higher quality ones have a better chance of being 10 and above.
+
+```{r echo = FALSE, message = FALSE, comment = FALSE}
+rwine.alc_upper <- subset(rwine, alcohol >= 12)
+rwine.alc_lower <- subset(rwine, alcohol < 12)
+#I made two new dataframes based on alcohol content from rwine
+
+alc_dens(rwine.alc_lower)
+```
+
+Creating two new data frames, I am able to zoom in to the areas of the plot that have alcohol greater than or equal to 12 and less than 12. Zooming in the the alcohol that is less than 12, we can see that most of the alcohols have a solid distribution acorss this range.
+
+```{r echo = FALSE, message = FALSE, comment = FALSE}
+alc_dens(rwine.alc_upper)
+```
+
+From zooming in to the alcohol above 12, we can actually see that quality 5 alcohols show up around 13 and 15. In the previous graphs this was very hard to see, but we can also see that quality 8 has the widest spread in the range.
+
+```{r echo=FALSE, message=FALSE, comment=FALSE}
+rwine.qual_lohi <- subset(rwine, quality == 3 | quality == 8)
+#New dataframe based on these conditions. I wanted to only see observations with quality of 3 or 8
+
+alc_dens(rwine.qual_lohi)
+```
+
+Now, when we look at a density plot for the lowest quality and the highest quality alcohol after creating the new data frame for this, we can see that the lowest quality tends to have more concentration on the lower end, and the higher quality tends to have more concentration on the higher end.
+
+```{r echo=FALSE, message=FALSE, comment=FALSE}
+ggplot(aes(volatile.acidity, fill = new_quality, colour = new_quality), 
+       data = rwine)+
+  geom_density(alpha = 1/20)+
+  labs(fill = 'Wine Quality', colour = 'Wine Quality')+
+  xlab('Volatile Acidity (acetic acid - g/dm^3)')+
+  theme_hc()
+#This creates a density plot based on volatile acidity.
+```
+
+From this chart we can check out the density of volatile acidity based on the quality of the wine. From this chart, it would seem that most higher quality wines have a lower volatile acidity.
+
+```{r echo=FALSE, warning=FALSE, comment=FALSE}
+ggplot(aes(x = quality, y = volatile.acidity), data = rwine)+
+  geom_line(stat = 'summary', fun.y = mean, color = 'purple')+
+  ylab('volatile acidity (acetic acid - g /dm^3)')+
+  xlab('Wine Quality')+
+  theme_hc()
+#This code greates a line graph
+```
+
+Here, looking at the volatile acidity density between qualities of wine, we can see that usually a higher quality wine has a lower volatile acidity. With the line graph, we can see a sharp decline in the mean volatile acidity based on the quality of wine.
+
+```{r echo=FALSE, message=FALSE, comment=FALSE}
+ggplot(aes(x = density, y = fixed.acidity, colour = new_quality), 
+       data = rwine)+
+  geom_smooth(se = FALSE)+
+  ylab('Fixed Acidity (tartaric acid - g/dm^3)')+
+  xlab('Density (g/cm^3)')+
+  labs(colour = 'Wine Quality')+
+  theme_hc()
+```
+
+```{r echo=FALSE, message=FALSE, comment=FALSE}
+
+p1 <- ggplot(aes(x = density, y = fixed.acidity, colour = new_quality),
+       data = subset(rwine, quality == 3| quality == 4))+
+  geom_smooth()+
+  ylab('F.A. (tartaric acid - g/dm^3)')+
+  xlab('Density (g/cm^3)')+
+  labs(colour = 'Wine Quality')+
+  theme_tufte()
+
+p2 <- ggplot(aes(x = density, y = fixed.acidity, colour = new_quality),
+       data = subset(rwine, quality == 5| quality == 6))+
+  geom_smooth()+
+  ylab('F.A. (tartaric acid - g/dm^3)')+
+  xlab('Density (g/cm^3)')+
+  labs(colour = 'Wine Quality')+
+  theme_tufte()
+
+p3 <- ggplot(aes(x = density, y = fixed.acidity, colour = new_quality),
+       data = subset(rwine, quality == 7| quality == 8))+
+  geom_smooth()+
+  ylab('F.A. (tartaric acid - g/dm^3)')+
+  xlab('Density (g/cm^3)')+
+  labs(colour = 'Wine Quality')+
+  theme_tufte()
+
+grid.arrange(p1, p2, p3, ncol = 1)
+
+#With this code, I was able to create a set of graphs using grid extra that will display in the same screen
+```
+
+As we can see from these group of charts, the density and fixed acidity (F.A.) from the bivariate charts section holds true. As the density increases, the fixed acidity generally increases.
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+There were some very interesting observations in this section. The plots revealed some interesting information about correlations in the data set. As quality increases, alcohol content increases, and at the same time fixed acidity and wine density decrease. So generally, it seems that higher quality wines have higher alcohol content while having lower densit and fixed acidity.
+
+### Were there any interesting or surprising interactions between features?
+Yes, the whole relationship between volatile acidity and quality seemed to follow a similar trend to quality and fixed acidity.
+
+------
+
+# Final Plots and Summary
+
+### Plot One
+```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_One}
+ggplot(aes(x = alcohol, y = density), data = rwine)+
+  geom_density2d(color = 'black')+
+  geom_jitter(alpha = 1/7, color = 'magenta')+
+  geom_smooth()+
+  theme_hc()+
+  xlab('Alcohol Content %')+
+  ylab('Density (g/cm3)')+
+  ggtitle('Wine Density to Alcohol Content')
+```
+
+### Description One
+Generally, the wine density decreases as the alcohol content increases. This makes me wonder, does alcohol content itself lower density? Is something put in place of the additional alcohol to make the density higher, and does this have a higher density than alcohol as a substance?
+
+### Plot Two
+```{r echo=FALSE, message=FALSE, comment=FALSE, Plot_Two}
+ggplot(aes(alcohol, fill = new_quality, colour = new_quality),
+       data = rwine.qual_lohi)+
+  geom_density(alpha = 1/20)+
+  theme_hc()+
+  xlab('Alcohol Content %')+
+  ylab('Alcohol Content Density')+
+  labs( fill = 'Wine Quality', colour = 'Wine Quality')+
+  ggtitle('Alcohol Content Distribution of Highest and Lowest Quality Wines')
+```
+
+### Description Two
+Here we can see that the distribution of alcohol content of the lowest quality wine is mainly to the left of the chart while the highest quality is to the right. Higher quality wine has alcohol contents ranging from the lowest to the highest alcohol content values on the chart, while lower alcohols stop short around an alcohol content of 12.
+
+### Plot Three
+```{r echo=FALSE, message=FALSE, comment=FALSE, Plot_Three}
+ggplot(aes(x = density, y = fixed.acidity, colour = new_quality), 
+       data = rwine)+
+  geom_smooth(se = FALSE)+
+  theme_hc()+
+  xlab('Density (g/cm^3)')+
+  ylab('Fixed Acidity (g/dm^3)')+
+  labs(colour = 'Wine Quality')
+```
+
+### Description Three
+
+With this plot, we charted the fixed acidity level based on the wine density. We can see that as the wine density rises, the fixed acidity also rises. Seeing where each of the wine quality lines stop, we can see that the highest quality wines stop very short of the maximum density.
+
+------
+
+# Reflection
+Through exploration of the red wine data set, I found that 'more is less' when it comes to quality of the wine. After looking through the histograms, I thought that it would be much better to view the data on a correlation plot. After viewing the data, I made selections based on correlations that I found present. Several correlations that I notice, I threw out of the posibility of analyzing. These were variables that seemed like they would be a double of the information already provided, or just did not seem interesting to the analysis (i feel that variables such as acidity, alcohol content, and acidity are factors in the data that you can actually taste or affect your enjoyment of the wine). From here, I wanted to see how each variable interacted with each other and how they also interacted with the quality of a wine. Through this I was able to get a limited idea of what a high quality wine consists of.
+
+From the data presented here, I wanted to get a an idea of a few points that make a quality wine. Low acidity and low density seem to be very interesting results when it comes to a higher quality wine. Alcohol content also seems to play a factor, but the high quality wine is still distributed over all alcohol contents. It still does tend to have a heavier distribution leaning towards the higher alcohol content. There was a positive trend between density and acidity, and a positive trend between alcohol content and quality. This resulted in a negative trend between the two sets aforementioned.
+
+Several limitations are present in this data set. The data is only based on red wine varients of the Portuguese 'Vinho Verde'. The results may have been different with a different type of wine. Also, since there is no brand infomation, grape type, or wine prices available, we cannot look at these variables. It could even mean that the highest quality wines are made by only a select few brands, or that certain grape types introduce more acidity or density into the wine. Price would also be nice, because the price may also affect the alcohol content of the wine (as higher alcohol content may result in a higher priced product).
+
+For future analysis, I may want to see if there is a total content that each wine has individually. By this, I mean how much acid, how much sulfur, how much chloride is in a wine. This may shed some light on the denstity of each of the wines, and may shed some light on why the acidity and density trend down as alcohol content trends upwards.
